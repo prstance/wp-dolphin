@@ -90,6 +90,7 @@ jobs:
           cmake -S . -B build -G Ninja $WP_CMAKE_FLAGS \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt)" \
+            -DUSE_SYSTEM_LIBS=OFF \
             -DPOSTPROCESS_BUNDLE=ON \
             -DMACOS_CODE_SIGNING_IDENTITY=-
           cmake --build build
