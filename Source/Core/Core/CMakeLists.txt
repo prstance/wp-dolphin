@@ -823,6 +823,13 @@ if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   target_link_options(core PUBLIC -Wl,-zwxneeded)
 endif()
 
+if(NOT WIN32)
+  target_sources(core PRIVATE
+    HW/WiimoteReal/IOBridge.cpp
+    HW/WiimoteReal/IOBridge.h
+  )
+endif()
+
 if(TARGET Hidapi::Hidapi)
   target_sources(core PRIVATE
     HW/WiimoteReal/IOhidapi.cpp

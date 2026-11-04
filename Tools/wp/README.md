@@ -11,7 +11,10 @@ pour la distribuer avec le launcher Wii Party :
 
 Options de compilation : mise à jour automatique et statistiques désactivées
 (`ENABLE_AUTOUPDATE=OFF`, `ENABLE_ANALYTICS=OFF`), distributeur `wii-party-launcher`.
-Le code de Dolphin lui-même n'est pas modifié pour l'instant.
+
+Dans le code de Dolphin, une seule addition : `Source/Core/Core/HW/WiimoteReal/IOBridge.*`. Si
+`WP_WIIMOTE_BRIDGE` nomme une socket, Dolphin y demande les Wiimotes de chaque place au launcher,
+qui reste connecté à elles, au lieu d'en chercher lui-même en Bluetooth.
 
 ## Contenu des archives
 
@@ -30,7 +33,7 @@ git tag wp-2609a-1   # <version Dolphin>-<révision Wii Party>
 git push origin wp-2609a-1
 ```
 
-Puis reporter les URL et les sommes de `SHA256SUMS.txt` dans `src-tauri/deps.json` du launcher.
+Puis reporter les URL et les sommes de `SHA256SUMS.txt` dans `src-tauri/tools.json` du launcher.
 
 ## Construire Linux en local
 

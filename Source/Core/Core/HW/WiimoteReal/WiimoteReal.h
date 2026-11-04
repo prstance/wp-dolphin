@@ -6,6 +6,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -61,6 +62,9 @@ public:
   ~Wiimote() override;
 
   virtual std::string GetId() const = 0;
+
+  // The only player slot this remote may fill, if it is tied to one.
+  virtual std::optional<int> GetPreferredSlot() const { return std::nullopt; }
 
   bool GetNextReport(Report* report);
 

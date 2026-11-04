@@ -4,6 +4,7 @@
 #include "Core/HW/WiimoteReal/WiimoteReal.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <mutex>
 #include <unordered_set>
 
@@ -22,6 +23,7 @@
 #include "Core/HW/WiimoteCommon/DataReport.h"
 #include "Core/HW/WiimoteCommon/WiimoteHid.h"
 #include "Core/HW/WiimoteReal/IOAndroid.h"
+#include "Core/HW/WiimoteReal/IOBridge.h"
 #include "Core/HW/WiimoteReal/IOLinux.h"
 #include "Core/HW/WiimoteReal/IOWin.h"
 #include "Core/HW/WiimoteReal/IOhidapi.h"
@@ -94,8 +96,15 @@ static void TryToFillWiimoteSlot(u32 index)
       return;
   }
 
-  if (TryToConnectWiimoteToSlot(s_wiimote_pool.front().wiimote, index))
-    s_wiimote_pool.erase(s_wiimote_pool.begin());
+  const auto entry = std::ranges::find_if(s_wiimote_pool, [index](const auto& candidate) {
+    const auto slot = candidate.wiimote->GetPreferredSlot();
+    return !slot || *slot == int(index);
+  });
+  if (entry == s_wiimote_pool.end())
+    return;
+
+  if (TryToConnectWiimoteToSlot(entry->wiimote, index))
+    s_wiimote_pool.erase(entry);
 }
 
 void PopulateDevices()
@@ -663,10 +672,18 @@ void WiimoteScanner::ThreadFunc()
   {
     std::lock_guard lg(m_backends_mutex);
 
-    m_backends.emplace_back(std::make_unique<WiimoteScannerLinux>());
-    m_backends.emplace_back(std::make_unique<WiimoteScannerAndroid>());
-    m_backends.emplace_back(std::make_unique<WiimoteScannerWindows>());
-    m_backends.emplace_back(std::make_unique<WiimoteScannerHidapi>());
+#ifndef _WIN32
+    // The launcher holds the remotes: Dolphin must not look for them itself.
+    if (const char* const bridge = std::getenv("WP_WIIMOTE_BRIDGE"))
+      m_backends.emplace_back(std::make_unique<WiimoteScannerBridge>(bridge));
+#endif
+    if (m_backends.empty())
+    {
+      m_backends.emplace_back(std::make_unique<WiimoteScannerLinux>());
+      m_backends.emplace_back(std::make_unique<WiimoteScannerAndroid>());
+      m_backends.emplace_back(std::make_unique<WiimoteScannerWindows>());
+      m_backends.emplace_back(std::make_unique<WiimoteScannerHidapi>());
+    }
   }
 
   while (m_scan_thread_running.IsSet())
