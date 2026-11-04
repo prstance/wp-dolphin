@@ -100,7 +100,7 @@ jobs:
       - name: Package
         run: |
           mkdir -p dist
-          tar -C build/Binaries -czf dist/dolphin-wp-macos-arm64.tar.gz DolphinQt.app dolphin-tool
+          tar -C build/Binaries -czf dist/dolphin-wp-macos-arm64.tar.gz Dolphin.app dolphin-tool
       - uses: actions/upload-artifact@v4
         with:
           name: macos

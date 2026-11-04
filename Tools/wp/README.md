@@ -19,7 +19,7 @@ Le code de Dolphin lui-même n'est pas modifié pour l'instant.
 | --- | --- | --- |
 | Linux | `dolphin-wp-linux-x86_64.tar.gz` | `usr/bin/dolphin-emu` |
 | Windows | `dolphin-wp-windows-x64.zip` | `Dolphin/Dolphin.exe` |
-| macOS | `dolphin-wp-macos-arm64.tar.gz` | `DolphinQt.app/Contents/MacOS/DolphinQt` |
+| macOS | `dolphin-wp-macos-arm64.tar.gz` | `Dolphin.app/Contents/MacOS/Dolphin` |
 
 Le launcher lance toujours Dolphin avec `-u <dossier>` pour garder son propre profil.
 
