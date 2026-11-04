@@ -1,0 +1,125 @@
+# Builds the Dolphin used by the Wii Party launcher for Linux, Windows and macOS.
+# Pushing a tag "wp-*" (e.g. wp-2609a-1) also publishes a GitHub release with
+# the three archives and their SHA-256 sums, which the launcher downloads.
+name: Wii Party build
+
+on:
+  push:
+    tags: ["wp-*"]
+  workflow_dispatch:
+
+env:
+  # Our builds must not replace themselves with upstream ones or report analytics.
+  WP_CMAKE_FLAGS: >-
+    -DCMAKE_BUILD_TYPE=Release
+    -DENABLE_AUTOUPDATE=OFF
+    -DENABLE_ANALYTICS=OFF
+    -DENABLE_TESTS=OFF
+    -DDISTRIBUTOR=wii-party-launcher
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config git curl file \
+            qt6-base-dev qt6-base-private-dev libqt6svg6-dev qt6-qpa-plugins \
+            libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
+            libevdev-dev libusb-1.0-0-dev libxrandr-dev libxi-dev libudev-dev libsystemd-dev \
+            libbluetooth-dev libasound2-dev libpulse-dev libgl-dev libegl-dev libcurl4-openssl-dev \
+            libfuse2t64
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_INSTALL_PREFIX=/usr $WP_CMAKE_FLAGS
+          cmake --build build
+      - name: Package
+        run: QMAKE=/usr/lib/qt6/bin/qmake Tools/wp/package-linux.sh build "dist/dolphin-wp-linux-x86_64.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/*
+
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Build
+        shell: bash
+        run: |
+          cmake --preset ninja-release-x64 $WP_CMAKE_FLAGS
+          cmake --build build/release/x64
+      - name: Package
+        shell: pwsh
+        run: |
+          $bin = "build/release/x64/Binaries"
+          $out = "dist/Dolphin"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Copy-Item -Recurse "$bin/*" $out
+          Get-ChildItem $out -Recurse -Include *.pdb,*.ilk,*.lib,*.exp | Remove-Item
+          # Dolphin's windeployqt step skips the MSVC runtime; ship it app-local
+          # so players don't need the Visual C++ redistributable.
+          Copy-Item "$env:VCToolsRedistDir/x64/Microsoft.VC*.CRT/*.dll" $out
+          Compress-Archive -Path $out -DestinationPath "dist/dolphin-wp-windows-x64.zip"
+          Remove-Item -Recurse $out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: brew install qt ninja
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja $WP_CMAKE_FLAGS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt)" \
+            -DPOSTPROCESS_BUNDLE=ON \
+            -DMACOS_CODE_SIGNING_IDENTITY=-
+          cmake --build build
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -C build/Binaries -czf dist/dolphin-wp-macos-arm64.tar.gz Dolphin.app dolphin-tool
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/wp-')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release create "$GITHUB_REF_NAME" * --repo "$GITHUB_REPOSITORY" \
+            --title "Dolphin Wii Party $GITHUB_REF_NAME" \
+            --notes "Dolphin ${GITHUB_REF_NAME#wp-} compilé pour le launcher Wii Party (mise à jour auto et statistiques désactivées). Sommes de contrôle : SHA256SUMS.txt."
