@@ -192,6 +192,15 @@ static bool HandleExtractPartition(const std::string& output, const std::string&
     return true;
   }
 
+  // Wii Party launcher: the executable alone, which isn't in the filesystem (the
+  // mods' deltas are made against the player's own disc).
+  if (single_file_path == "sys/main.dol" || single_file_path == "/sys/main.dol")
+  {
+    file.append("sys/main.dol");
+    File::CreateFullPath(file);
+    return ExportDOL(disc_volume, partition, file);
+  }
+
   const auto file_info = GetFileInfo(disc_volume, partition, single_file_path);
   if (file_info != nullptr)
   {
