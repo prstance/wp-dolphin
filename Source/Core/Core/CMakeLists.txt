@@ -588,6 +588,8 @@ add_library(core
   WiiRoot.h
   WiiUtils.cpp
   WiiUtils.h
+  WPGameState.cpp
+  WPGameState.h
 )
 
 add_custom_command(

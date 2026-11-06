@@ -12,9 +12,13 @@ pour la distribuer avec le launcher Wii Party :
 Options de compilation : mise à jour automatique et statistiques désactivées
 (`ENABLE_AUTOUPDATE=OFF`, `ENABLE_ANALYTICS=OFF`), distributeur `wii-party-launcher`.
 
-Dans le code de Dolphin, une seule addition : `Source/Core/Core/HW/WiimoteReal/IOBridge.*`. Si
-`WP_WIIMOTE_BRIDGE` nomme une socket, Dolphin y demande les Wiimotes de chaque place au launcher,
-qui reste connecté à elles, au lieu d'en chercher lui-même en Bluetooth.
+Dans le code de Dolphin, deux additions :
+
+- `Source/Core/Core/HW/WiimoteReal/IOBridge.*` : si `WP_WIIMOTE_BRIDGE` nomme une socket, Dolphin y
+  demande les Wiimotes de chaque place au launcher, qui reste connecté à elles, au lieu d'en chercher
+  lui-même en Bluetooth.
+- `Source/Core/Core/WPGameState.*` : si `WP_GAME_STATE` est défini, Dolphin écrit sur stdout la scène,
+  le mode et le mini-jeu de Wii Party dès qu'ils changent (présence Discord du launcher).
 
 ## Contenu des archives
 

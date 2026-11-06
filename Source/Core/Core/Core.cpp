@@ -71,6 +71,7 @@
 #include "Core/PowerPC/PowerPC.h"
 #include "Core/State.h"
 #include "Core/System.h"
+#include "Core/WPGameState.h"
 #include "Core/WiiRoot.h"
 
 #ifdef USE_MEMORYWATCHER
@@ -890,6 +891,7 @@ void Callback_NewField(Core::System& system)
   }
 
   AchievementManager::GetInstance().DoFrame();
+  WPGameState::Update(system);
 }
 
 void UpdateTitle(Core::System& system)
