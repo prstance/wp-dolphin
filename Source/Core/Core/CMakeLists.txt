@@ -362,6 +362,8 @@ add_library(core
   HW/WiimoteEmu/Speaker.h
   HW/WiimoteEmu/WiimoteEmu.cpp
   HW/WiimoteEmu/WiimoteEmu.h
+  HW/WiimoteReal/IOBridge.cpp
+  HW/WiimoteReal/IOBridge.h
   HW/WiimoteReal/WiimoteReal.cpp
   HW/WiimoteReal/WiimoteReal.h
   HW/WiiSave.cpp
@@ -823,13 +825,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   # OpenBSD doesn't allow memory to be both writable and executable by default.
   # The JIT currently needs this.
   target_link_options(core PUBLIC -Wl,-zwxneeded)
-endif()
-
-if(NOT WIN32)
-  target_sources(core PRIVATE
-    HW/WiimoteReal/IOBridge.cpp
-    HW/WiimoteReal/IOBridge.h
-  )
 endif()
 
 if(TARGET Hidapi::Hidapi)

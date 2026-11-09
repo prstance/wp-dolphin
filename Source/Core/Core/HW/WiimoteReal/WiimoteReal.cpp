@@ -672,11 +672,9 @@ void WiimoteScanner::ThreadFunc()
   {
     std::lock_guard lg(m_backends_mutex);
 
-#ifndef _WIN32
     // The launcher holds the remotes: Dolphin must not look for them itself.
     if (const char* const bridge = std::getenv("WP_WIIMOTE_BRIDGE"))
       m_backends.emplace_back(std::make_unique<WiimoteScannerBridge>(bridge));
-#endif
     if (m_backends.empty())
     {
       m_backends.emplace_back(std::make_unique<WiimoteScannerLinux>());
