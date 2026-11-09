@@ -42,7 +42,11 @@ FileDataLoaderHostFS::FileDataLoaderHostFS(std::string sd_root, const std::strin
   // The following initialization should properly replicate this behavior.
 
   // First set m_patch_root to the folder the parsed XML file is in.
-  SplitPath(xml_path, &m_patch_root, nullptr, nullptr);
+  // (SplitPath only cuts at '/': a Windows path given with '\' would leave just the drive.)
+  std::string xml_path_unified = xml_path;
+  UnifyPathSeparators(xml_path_unified);
+  UnifyPathSeparators(m_sd_root);
+  SplitPath(xml_path_unified, &m_patch_root, nullptr, nullptr);
 
   // Then try to resolve the given patch_root as if it was a file path, and on success replace the
   // m_patch_root with it.
