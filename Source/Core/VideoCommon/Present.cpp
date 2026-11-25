@@ -23,6 +23,7 @@
 #include "VideoCommon/VideoConfig.h"
 #include "VideoCommon/VideoEvents.h"
 #include "VideoCommon/Widescreen.h"
+#include "VideoCommon/WPOverlay.h"
 
 std::unique_ptr<VideoCommon::Presenter> g_presenter;
 
@@ -906,6 +907,8 @@ void Presenter::RenderXFBToScreen(const MathUtil::Rectangle<int>& target_rc,
 void Presenter::Present(PresentInfo* present_info)
 {
   m_present_count++;
+  if (present_info != nullptr)
+    WPOverlay::GameFramePresented();
 
   if (g_gfx->IsHeadless() || (!m_onscreen_ui && !m_xfb_entry))
     return;

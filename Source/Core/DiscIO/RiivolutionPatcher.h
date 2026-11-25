@@ -43,6 +43,8 @@ public:
                                                  u64 disc_offset) = 0;
   virtual std::optional<std::string>
   ResolveSavegameRedirectPath(std::string_view external_relative_path) = 0;
+  // The folder the patch's files come from, to say whose patch it is ("": unknown).
+  virtual std::string GetRoot() const { return {}; }
 };
 
 class FileDataLoaderHostFS final : public FileDataLoader
@@ -63,6 +65,7 @@ public:
                                          u64 disc_offset) override;
   std::optional<std::string>
   ResolveSavegameRedirectPath(std::string_view external_relative_path) override;
+  std::string GetRoot() const override { return m_sd_root; }
 
 private:
   std::optional<std::string>

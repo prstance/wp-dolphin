@@ -125,6 +125,8 @@ add_library(videocommon
   OnScreenDisplay.h
   OnScreenUI.cpp
   OnScreenUI.h
+  WPOverlay.cpp
+  WPOverlay.h
   OnScreenUIKeyMap.h
   OpcodeDecoding.cpp
   OpcodeDecoding.h

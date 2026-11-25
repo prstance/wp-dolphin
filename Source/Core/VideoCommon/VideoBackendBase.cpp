@@ -68,6 +68,7 @@
 #include "VideoCommon/VideoState.h"
 #include "VideoCommon/Widescreen.h"
 #include "VideoCommon/XFStateManager.h"
+#include "VideoCommon/WPOverlay.h"
 
 VideoBackendBase* g_video_backend = nullptr;
 
@@ -362,6 +363,10 @@ bool VideoBackendBase::InitializeShared(std::unique_ptr<AbstractGfx> gfx,
     OSD::AddMessage(fmt::format("Texture Dumping is enabled. This will reduce performance."),
                     OSD::Duration::NORMAL);
   }
+
+  // The launcher's loading screen, as soon as it can be drawn: the shader caches take a moment.
+  if (WPOverlay::IsLoading())
+    g_presenter->Present();
 
   g_shader_cache->InitializeShaderCache();
   system.GetCustomResourceManager().Initialize();

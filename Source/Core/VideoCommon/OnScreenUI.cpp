@@ -30,6 +30,7 @@
 #include "VideoCommon/Statistics.h"
 #include "VideoCommon/VertexManagerBase.h"
 #include "VideoCommon/VideoConfig.h"
+#include "VideoCommon/WPOverlay.h"
 
 #include <inttypes.h>
 #include <mutex>
@@ -95,6 +96,7 @@ bool OnScreenUI::Initialize(u32 width, u32 height, float scale)
     io.Fonts->Clear();
     io.Fonts->AddFontFromFileTTF(file.c_str());
   }
+  WPOverlay::AddFonts();
 
   // Setup new font management behavior
   io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures | ImGuiBackendFlags_RendererHasVtxOffset;
@@ -114,6 +116,7 @@ OnScreenUI::~OnScreenUI()
   std::unique_lock<std::mutex> imgui_lock(m_imgui_mutex);
 
   ImGui::EndFrame();
+  WPOverlay::Shutdown();
   ImPlot::DestroyContext();
   ImGui::DestroyContext();
   m_imgui_textures.clear();
@@ -422,6 +425,7 @@ void OnScreenUI::Finalize()
   DrawDebugText();
   OSD::DrawMessages();
   DrawChallengesAndLeaderboards();
+  WPOverlay::Draw();
   ImGui::Render();
 
   // Check for font changes

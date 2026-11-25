@@ -39,6 +39,7 @@
 #include "VideoCommon/Fifo.h"
 #include "VideoCommon/Present.h"
 #include "VideoCommon/VideoConfig.h"
+#include "VideoCommon/WPOverlay.h"
 
 Host::Host()
 {
@@ -218,7 +219,9 @@ void Host_Message(HostMessageID id)
 
 void Host_UpdateTitle(const std::string& title)
 {
-  emit Host::GetInstance()->RequestTitle(QString::fromStdString(title));
+  // Started by the Wii Party launcher: the game's name rather than Dolphin's details.
+  const std::string launcher = WPOverlay::Title();
+  emit Host::GetInstance()->RequestTitle(QString::fromStdString(launcher.empty() ? title : launcher));
 }
 
 bool Host_RendererHasFocus()

@@ -4,6 +4,8 @@
 #include "DiscIO/RiivolutionPatcher.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -519,17 +521,32 @@ static bool MemoryMatchesAt(const Core::CPUThreadGuard& guard, u32 offset,
   return true;
 }
 
-static void ApplyMemoryPatch(const Core::CPUThreadGuard& guard, u32 offset,
+// For the Wii Party launcher (WP_GAME_STATE): a memory patch that couldn't be applied, on stdout
+// with the folder its files come from, which tells the launcher whose patch it was:
+//
+//   wp-patch-skipped <address> <folder>
+static void ReportSkipped(const Patch& patch, u32 address)
+{
+  static const bool enabled = std::getenv("WP_GAME_STATE") != nullptr;
+  if (!enabled)
+    return;
+  const std::string root = patch.m_file_data_loader ? patch.m_file_data_loader->GetRoot() : "";
+  std::fputs(fmt::format("wp-patch-skipped {:08x} {}\n", address, root).c_str(), stdout);
+  std::fflush(stdout);
+}
+
+// False: not applied (nothing to write, or the memory isn't what the patch expects there).
+static bool ApplyMemoryPatch(const Core::CPUThreadGuard& guard, u32 offset,
                              std::span<const u8> value, std::span<const u8> original)
 {
   if (AchievementManager::GetInstance().IsHardcoreModeActive())
-    return;
+    return true;
 
   if (value.empty())
-    return;
+    return false;
 
   if (!original.empty() && !MemoryMatchesAt(guard, offset, original))
-    return;
+    return false;
 
   auto& system = guard.GetSystem();
   const u32 size = static_cast<u32>(value.size());
@@ -541,6 +558,7 @@ static void ApplyMemoryPatch(const Core::CPUThreadGuard& guard, u32 offset,
     WARN_LOG_FMT(OSHLE, "Riivolution memory patch overlaps {} HLE hook(s) at {:08x} (size: {})",
                  overlapping_hook_count, offset, value.size());
   }
+  return true;
 }
 
 static std::vector<u8> GetMemoryPatchValue(const Patch& patch, const Memory& memory_patch)
@@ -556,12 +574,18 @@ static void ApplyMemoryPatch(const Core::CPUThreadGuard& guard, const Patch& pat
   if (memory_patch.m_offset == 0)
     return;
 
-  ApplyMemoryPatch(guard, memory_patch.m_offset | 0x80000000,
-                   GetMemoryPatchValue(patch, memory_patch), memory_patch.m_original);
+  const u32 address = memory_patch.m_offset | 0x80000000;
+  if (!ApplyMemoryPatch(guard, address, GetMemoryPatchValue(patch, memory_patch),
+                        memory_patch.m_original))
+  {
+    ReportSkipped(patch, address);
+  }
 }
 
+// `report`: not finding it is said (the whole memory searched, not one of the apploader's pieces).
 static void ApplySearchMemoryPatch(const Core::CPUThreadGuard& guard, const Patch& patch,
-                                   const Memory& memory_patch, u32 ram_start, u32 length)
+                                   const Memory& memory_patch, u32 ram_start, u32 length,
+                                   bool report = false)
 {
   if (memory_patch.m_original.empty() || memory_patch.m_align == 0)
     return;
@@ -572,10 +596,13 @@ static void ApplySearchMemoryPatch(const Core::CPUThreadGuard& guard, const Patc
     const u32 address = ram_start + i;
     if (MemoryMatchesAt(guard, address, memory_patch.m_original))
     {
-      ApplyMemoryPatch(guard, address, GetMemoryPatchValue(patch, memory_patch), {});
-      break;
+      if (!ApplyMemoryPatch(guard, address, GetMemoryPatchValue(patch, memory_patch), {}) && report)
+        ReportSkipped(patch, address);
+      return;
     }
   }
+  if (report)
+    ReportSkipped(patch, 0);
 }
 
 static void ApplyOcarinaMemoryPatch(const Core::CPUThreadGuard& guard, const Patch& patch,
@@ -632,7 +659,7 @@ void ApplyGeneralMemoryPatches(const Core::CPUThreadGuard& guard, std::span<cons
         continue;
 
       if (memory.m_search)
-        ApplySearchMemoryPatch(guard, patch, memory, 0x80000000, system_memory.GetRamSize());
+        ApplySearchMemoryPatch(guard, patch, memory, 0x80000000, system_memory.GetRamSize(), true);
       else
         ApplyMemoryPatch(guard, patch, memory);
     }

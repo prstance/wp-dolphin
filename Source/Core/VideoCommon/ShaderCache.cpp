@@ -24,6 +24,7 @@
 #include "VideoCommon/VertexManagerBase.h"
 #include "VideoCommon/VideoCommon.h"
 #include "VideoCommon/VideoConfig.h"
+#include "VideoCommon/WPOverlay.h"
 
 #include <imgui.h>
 
@@ -171,6 +172,14 @@ void ShaderCache::WaitForAsyncCompiler()
   bool running = true;
 
   constexpr auto update_ui_progress = [](size_t completed, size_t total) {
+    // On the launcher's loading screen.
+    if (WPOverlay::IsLoading())
+    {
+      WPOverlay::SetShaderProgress(completed, total);
+      g_presenter->Present();
+      return;
+    }
+
     const float center_x = ImGui::GetIO().DisplaySize.x * 0.5f;
     const float center_y = ImGui::GetIO().DisplaySize.y * 0.5f;
     const float scale = ImGui::GetIO().DisplayFramebufferScale.x;
@@ -201,6 +210,7 @@ void ShaderCache::WaitForAsyncCompiler()
     m_async_shader_compiler->RetrieveWorkItems();
   }
 
+  WPOverlay::SetShaderProgress(0, 0);
   // An extra Present to clear the screen
   g_presenter->Present();
 }

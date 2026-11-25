@@ -31,6 +31,7 @@
 #include "VideoCommon/VertexLoaderManager.h"
 #include "VideoCommon/VertexManagerBase.h"
 #include "VideoCommon/VideoBackendBase.h"
+#include "VideoCommon/WPOverlay.h"
 
 namespace Fifo
 {
@@ -296,6 +297,7 @@ void FifoManager::RunGpuLoop()
       [this] {
         // Run events from the CPU thread.
         AsyncRequests::GetInstance()->PullEvents();
+        WPOverlay::Idle();
 
         // Do nothing while paused
         if (!m_emu_running_state.IsSet())

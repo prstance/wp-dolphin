@@ -12,14 +12,28 @@ pour la distribuer avec le launcher Wii Party :
 Options de compilation : mise à jour automatique et statistiques désactivées
 (`ENABLE_AUTOUPDATE=OFF`, `ENABLE_ANALYTICS=OFF`), distributeur `wii-party-launcher`.
 
-Dans le code de Dolphin, deux additions :
+Dans le code de Dolphin, trois additions :
 
 - `Source/Core/Core/HW/WiimoteReal/IOBridge.*` : si `WP_WIIMOTE_BRIDGE` nomme une socket (Linux,
   macOS) ou un tube nommé (Windows, `\\.\pipe\...`), Dolphin y demande les Wiimotes de chaque place
   au launcher, qui reste connecté à elles, au lieu d'en chercher lui-même en Bluetooth. Même
   protocole partout ; les rapports envoyés au launcher commencent toujours par `0xA2`.
 - `Source/Core/Core/WPGameState.*` : si `WP_GAME_STATE` est défini, Dolphin écrit sur stdout la scène,
-  le mode et le mini-jeu de Wii Party dès qu'ils changent (présence Discord du launcher).
+  le mode et le mini-jeu de Wii Party dès qu'ils changent (présence Discord du launcher), et sur les
+  plateaux de l'Île aux défis, de Globe-trotter et de Trios de Mii les nombres des joueurs (`wp-stats` :
+  cases avant le défi final et volcan, pièces, photos et repos, points), lus dans le `.bss` du REL du plateau.
+- `Source/Core/VideoCommon/WPOverlay.*` : si `WP_OVERLAY` est défini (un objet JSON : les couleurs du
+  launcher, son logo, les textes de l'écran de chargement), la fenêtre de jeu montre un écran de chargement
+  aux couleurs du launcher au lieu du noir (avec la progression des shaders), jusqu'à la première scène du
+  jeu (`WPGameState`), puis des notifications en haut à droite, une ligne JSON par notification sur stdin
+  (format dans `WPOverlay.h`). La fenêtre prend le titre et l'icône du launcher, et les textes de Dolphin
+  sa police (M PLUS Rounded 1c, `Data/Sys/Resources/wp`, licence OFL).
+- `Source/Core/VideoCommon/OnScreenDisplay.cpp` : avec `WP_OVERLAY`, les messages de Dolphin en haut à
+  gauche (« Video Info: … » du GPU, etc.) ne sont plus dessinés : les notifications du launcher les
+  remplacent.
+- `Source/Core/DiscIO/RiivolutionPatcher.cpp` : avec `WP_GAME_STATE`, un patch mémoire qui ne s'applique
+  pas (la mémoire n'est pas ce que le patch attend, valeur introuvable) est signalé sur stdout,
+  `wp-patch-skipped <adresse> <dossier>`, le dossier disant au launcher de quel mod il vient.
 
 ## Contenu des archives
 

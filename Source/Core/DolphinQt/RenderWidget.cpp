@@ -30,6 +30,7 @@
 #include "InputCommon/ControllerInterface/ControllerInterface.h"
 
 #include "VideoCommon/Present.h"
+#include "VideoCommon/WPOverlay.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -38,8 +39,10 @@
 
 RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
 {
-  setWindowTitle(QStringLiteral("Dolphin"));
-  setWindowIcon(Resources::GetAppIcon());
+  const QString launcher_logo = QString::fromStdString(WPOverlay::LogoPath());
+  setWindowTitle(WPOverlay::IsEnabled() ? QString::fromStdString(WPOverlay::Title()) :
+                                          QStringLiteral("Dolphin"));
+  setWindowIcon(launcher_logo.isEmpty() ? Resources::GetAppIcon() : QIcon(launcher_logo));
   setWindowRole(QStringLiteral("renderer"));
   setAcceptDrops(true);
 
